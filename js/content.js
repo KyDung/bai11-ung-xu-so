@@ -117,27 +117,40 @@ Content.learning = [
 <h3 class="sub">Các văn bản pháp lí cần nhớ</h3>
 <div class="laws">
   <div><b>Luật Giao dịch điện tử</b><span>2005</span></div>
-  <div><b>Luật Công nghệ thông tin</b><span>2006</span></div>
+  <div><b>Luật Công nghệ thông tin</b><span>2006 · Điều 12 khoản 2 cấm cung cấp, trao đổi, lưu trữ thông tin số có nội dung xấu</span></div>
   <div><b>Bộ luật Hình sự</b><span>2017</span></div>
-  <div><b>Luật An ninh mạng</b><span>2018</span></div>
+  <div><b>Luật An ninh mạng</b><span>2018 · Điều 8 khoản 1 cấm dùng không gian mạng để thực hiện các hành vi vi phạm</span></div>
   <div class="nd"><b>Nghị định 90/2008/NĐ-CP</b><span>chống thư rác</span></div>
   <div class="nd"><b>Nghị định 72/2013/NĐ-CP</b><span>quản lí, cung cấp, sử dụng dịch vụ Internet</span></div>
-  <div class="nd"><b>Nghị định 15/2020/NĐ-CP</b><span>xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, CNTT, giao dịch điện tử</span></div>
-  <div class="qd"><b>Quyết định 874/QĐ-BTTTT</b><span>6/2021: Bộ quy tắc ứng xử trên mạng xã hội</span></div>
+  <div class="nd"><b>Nghị định 15/2020/NĐ-CP</b><span>xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, CNTT, giao dịch điện tử. Điều 101 khoản 1 nêu cụ thể các hành vi đưa tin bị phạt</span></div>
+  <div class="qd"><b>Quyết định 874/QĐ-BTTTT</b><span>6/2021: Bộ quy tắc ứng xử trên mạng xã hội (khuyến cáo dùng tên thật, chia sẻ thông tin tích cực, tuân thủ quy định của nhà cung cấp mạng xã hội)</span></div>
 </div>
+<p class="small">Luật quy định chung, nghị định cụ thể hoá luật. Với người dùng cá nhân, các văn bản này tập trung vào việc sử dụng không gian mạng và bảo vệ bản quyền sản phẩm số.</p>
 <h3 class="sub">Cấm đưa lên mạng những thông tin nào?</h3>
-<p class="small">Theo Điều 12 Luật CNTT, Điều 8 Luật An ninh mạng và Điều 101 Nghị định 15/2020, những nội dung sau là <em>vi phạm</em>, kể cả khi em chỉ <em>chia sẻ lại</em>:</p>
-<ul class="chips-list">
-  <li>Thông tin giả mạo, sai sự thật, xuyên tạc, vu khống, xúc phạm uy tín, danh dự</li>
-  <li>Thông tin bịa đặt gây hoang mang trong nhân dân</li>
-  <li>Kích động bạo lực, tội ác, tệ nạn xã hội, đánh bạc</li>
-  <li>Cổ suý hủ tục, mê tín dị đoan, dâm ô, đồi truỵ</li>
-  <li>Miêu tả tỉ mỉ hành động chém giết, tai nạn, kinh dị</li>
-  <li>Chia sẻ tác phẩm báo chí, văn học, nghệ thuật khi chưa được chủ sở hữu đồng ý</li>
-  <li>Quảng cáo hàng hoá, dịch vụ bị cấm; chia sẻ đường dẫn đến nội dung bị cấm</li>
-  <li>Hình ảnh bản đồ Việt Nam không thể hiện hoặc thể hiện sai chủ quyền quốc gia</li>
-  <li>Tiết lộ bí mật nhà nước, quân sự, an ninh, kinh tế, đối ngoại</li>
-</ul>
+<p class="small">Kể cả khi em chỉ <em>chia sẻ lại</em>, các nội dung sau vẫn là vi phạm.</p>
+<div class="articles">
+  <div><h4>Luật CNTT, Điều 12 khoản 2</h4><ul>
+    <li><b>a)</b> Chống Nhà nước, phá hoại khối đoàn kết toàn dân</li>
+    <li><b>b)</b> Kích động bạo lực, chiến tranh, hận thù; kích động dâm ô, đồi truỵ, tội ác, tệ nạn, mê tín dị đoan</li>
+    <li><b>c)</b> Tiết lộ bí mật nhà nước, quân sự, an ninh, kinh tế, đối ngoại</li>
+    <li><b>d)</b> Xuyên tạc, vu khống, xúc phạm uy tín tổ chức, danh dự, nhân phẩm công dân</li>
+    <li><b>e)</b> Quảng cáo, tuyên truyền hàng hoá, dịch vụ thuộc danh mục cấm</li></ul></div>
+  <div><h4>Luật An ninh mạng, Điều 8 khoản 1</h4><ul>
+    <li><b>a, b)</b> Chống Nhà nước; tổ chức, lôi kéo người chống Nhà nước</li>
+    <li><b>c)</b> Xuyên tạc lịch sử, xúc phạm tôn giáo, phân biệt đối xử về giới, chủng tộc</li>
+    <li><b>d)</b> <em>Thông tin sai sự thật gây hoang mang trong nhân dân</em>, gây thiệt hại kinh tế – xã hội, xâm phạm quyền và lợi ích hợp pháp của người khác</li>
+    <li><b>e)</b> Mại dâm, tệ nạn xã hội, mua bán người; đăng thông tin dâm ô, đồi truỵ, tội ác</li>
+    <li><b>f)</b> Xúi giục, lôi kéo, kích động người khác phạm tội</li></ul></div>
+  <div><h4>Nghị định 15/2020, Điều 101 khoản 1</h4><ul>
+    <li><b>a)</b> Thông tin giả mạo, <em>sai sự thật</em>, xuyên tạc, vu khống, xúc phạm uy tín, danh dự, nhân phẩm</li>
+    <li><b>b)</b> Cổ suý hủ tục, mê tín dị đoan, dâm ô, đồi truỵ</li>
+    <li><b>c)</b> Miêu tả tỉ mỉ hành động chém, giết, tai nạn, kinh dị, rùng rợn</li>
+    <li><b>d)</b> Thông tin bịa đặt gây hoang mang, kích động bạo lực, tội ác, tệ nạn, đánh bạc</li>
+    <li><b>e)</b> Tác phẩm báo chí, văn học, nghệ thuật, xuất bản phẩm khi chưa được chủ sở hữu đồng ý</li>
+    <li><b>f)</b> Quảng cáo, chia sẻ thông tin về hàng hoá, dịch vụ bị cấm</li>
+    <li><b>g)</b> Bản đồ Việt Nam không thể hiện hoặc thể hiện sai chủ quyền quốc gia</li>
+    <li><b>h)</b> Đường dẫn đến thông tin có nội dung bị cấm</li></ul></div>
+</div>
 <h3 class="sub">Nguyên tắc an toàn khi chia sẻ thông tin</h3>
 <ol class="facts">
   <li>Trước khi đăng, <b>kiểm tra</b> tin có vi phạm pháp luật không và có chính xác không.</li>

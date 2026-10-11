@@ -4,7 +4,7 @@ const STAGES = ['home', 'warmup', 'learning', 'practice', 'final'];
 const STAGE_LABEL = { warmup: 'Khởi động', learning: 'Hình thành kiến thức', practice: 'Luyện tập', final: 'Vận dụng' };
 
 const App = {
-  state: null, submitting: false,
+  state: null, submitting: false, teacher: false, wantedHash: '',
 
   fresh() {
     return { student: null, studentId: null, warmup: null, drafts: {}, learning: [], practice: [], final: Final.fresh(), part1SubmittedAt: null, finalSubmittedAt: null };
@@ -16,7 +16,7 @@ const App = {
   rec(kind, act) { return this.state[kind].find(r => r.activityId === act.id); },
   passed(kind, act) { return !!this.rec(kind, act)?.passed; },
   completed(kind) { return this.acts(kind).every(a => this.passed(kind, a)); },
-  availableIndex(kind) { const a = this.acts(kind), i = a.findIndex(x => !this.passed(kind, x)); return i < 0 ? a.length - 1 : i; },
+  availableIndex(kind) { const a = this.acts(kind); if (this.teacher) return a.length - 1; const i = a.findIndex(x => !this.passed(kind, x)); return i < 0 ? a.length - 1 : i; },
   frontier() {
     if (!this.state.student) return 'home';
     if (!this.state.warmup) return 'warmup';
@@ -24,7 +24,7 @@ const App = {
     if (!this.completed('practice')) return 'practice';
     return 'final';
   },
-  canAccess(stage) { return STAGES.indexOf(stage) <= STAGES.indexOf(this.frontier()); },
+  canAccess(stage) { return this.teacher || STAGES.indexOf(stage) <= STAGES.indexOf(this.frontier()); },
 
   // Khi tải lại trang: chấm lại đáp án đã lưu, hoạt động nào không còn đúng thì khóa các hoạt động sau
   verifyState() {
@@ -87,12 +87,23 @@ const App = {
     if (stage === 'home') this.home();
     if (stage === 'warmup') this.warmup();
     if (stage === 'learning' || stage === 'practice') {
-      if (index === undefined && this.completed(stage)) { this.stageDone(stage); return; }
+      if (index === undefined && this.completed(stage)) { this.stageDone(stage); this.teacherBar(`${stage}/${this.acts(stage).length - 1}`); return; }
       const i = Math.max(0, Math.min(Number.parseInt(index, 10) || 0, this.availableIndex(stage)));
       if (String(i) !== index) history.replaceState(null, '', `#${stage}/${i}`);
       this.nav(stage); this.activity(stage, i);
+      this.teacherBar(`${stage}/${i}`);
     }
     if (stage === 'final') Final.render();
+    if (stage === 'home' || stage === 'warmup' || stage === 'final') this.teacherBar(stage);
+  },
+
+  /* Chế độ giáo viên (đang đăng nhập): đi qua mọi hoạt động để xem nhanh, không cần làm bài */
+  teacherBar(cur) {
+    if (!this.teacher) return;
+    const seq = ['home', 'warmup', ...this.acts('learning').map((_, i) => `learning/${i}`), ...this.acts('practice').map((_, i) => `practice/${i}`), 'final'];
+    const n = seq.indexOf(cur), prev = seq[n - 1], next = seq[n + 1];
+    document.querySelector('#main').insertAdjacentHTML('beforeend', `<div class="teacherbar" role="navigation" aria-label="Điều hướng giáo viên"><span>👩‍🏫 Chế độ giáo viên · ${n + 1}/${seq.length}</span><button type="button" class="secondary" data-go="${prev || ''}" ${prev ? '' : 'disabled'}>← Trước</button><button type="button" data-go="${next || ''}" ${next ? '' : 'disabled'}>Tiếp →</button></div>`);
+    document.querySelectorAll('.teacherbar [data-go]').forEach(b => { b.onclick = () => { if (b.dataset.go) location.hash = b.dataset.go; }; });
   },
 
   /* ---------- Tổng quan ---------- */
@@ -198,6 +209,7 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
   /* ---------- Nộp bài ---------- */
   async submit(type) {
     if (this.submitting) return;
+    if (!this.state.studentId) { Util.toast('Chế độ giáo viên: chưa nhập học sinh nên không nộp bài.'); return; }
     const status = document.querySelector('#submit-status'), say = t => { if (status) status.textContent = t; };
     if (!this.completed('learning') || !this.completed('practice')) { say('Em cần hoàn thành Hình thành kiến thức và Luyện tập trước khi nộp.'); return; }
     if (type === 'final' && !Final.passed()) { say('Bài Vận dụng còn thiếu yêu cầu. Em xem danh sách bên trên.'); return; }
@@ -223,7 +235,14 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     this.state.final = Final.normalize(this.state.final);
     this.verifyState();
     window.addEventListener('hashchange', () => this.route());
+    this.wantedHash = location.hash;
     this.route();
+    // Nếu trình duyệt đang đăng nhập tài khoản giáo viên thì mở khóa mọi hoạt động (học sinh không có tài khoản)
+    Api.sdk().then(({ auth, login }) => auth.onAuthStateChanged(login, user => {
+      if (!!user === this.teacher) return;
+      this.teacher = !!user;
+      if (this.teacher && this.wantedHash && this.wantedHash !== location.hash) location.hash = this.wantedHash; else this.route();
+    })).catch(() => {});
   }
 };
 App.init();
