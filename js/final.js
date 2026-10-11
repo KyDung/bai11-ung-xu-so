@@ -1,0 +1,106 @@
+/* Vận dụng: hồ sơ tình huống. Phần A chấm tự động; phần B, C chỉ kiểm tra độ dài tối thiểu,
+   web không chấm nội dung cá nhân (giáo viên đọc trên teacher.html). */
+const Final = {
+  cfg: Content.final,
+  fresh() {
+    return { partA: Quiz.newState(), partB: '', partC: ['', '', ''], typing: { keyCount: 0, charsTyped: 0, pasteBlocked: 0, firstInputAt: null, lastInputAt: null } };
+  },
+  // Đảm bảo state cũ (từ localStorage) có đủ trường
+  normalize(f) {
+    const d = this.fresh(), o = { ...d, ...(f || {}) };
+    o.partA = { ...d.partA, ...(o.partA || {}) };
+    o.partC = Array.isArray(o.partC) ? [0, 1, 2].map(i => String(o.partC[i] || '')) : d.partC;
+    o.partB = String(o.partB || '');
+    o.typing = { ...d.typing, ...(o.typing || {}) };
+    return o;
+  },
+  partAQuestion() {
+    const a = this.cfg.partA;
+    return { id: 'a', type: 'assign', ui: a.ui, text: a.text, groups: a.groups, items: a.items, hint: a.hint, explain: 'Chính xác! Em đã phân loại đúng cả các hành vi trong hồ sơ.' };
+  },
+  checks(f = App.state.final) {
+    const { partB, partC } = this.cfg;
+    const a = !!f.partA.locked.a;
+    const bw = Util.words(f.partB), cw = f.partC.map(Util.words), cOk = cw.filter(n => n >= partC.minWords).length;
+    return [
+      { id: 'partA', ok: a, label: 'Phần A: xếp đúng tất cả hành vi vào nhóm', hint: 'Bấm “Kiểm tra phần A” và sửa các mục có viền đỏ.' },
+      { id: 'partB', ok: bw >= partB.minWords, label: `Phần B: lời khuyên cho Hải (${Math.min(bw, partB.minWords)}/${partB.minWords} từ)`, hint: `Viết thêm cho đủ ${partB.minWords} từ.` },
+      { id: 'partC', ok: cOk === partC.count, label: `Phần C: ${partC.count} quy tắc, mỗi quy tắc từ ${partC.minWords} từ trở lên (${cOk}/${partC.count})`, hint: `Mỗi quy tắc cần ít nhất ${partC.minWords} từ.` }
+    ];
+  },
+  passed(f = App.state.final) { return this.checks(f).every(c => c.ok); },
+
+  // Dữ liệu gửi lên Firestore (khớp rules: final.code là chuỗi)
+  payload() {
+    const f = App.state.final, a = this.partAQuestion();
+    const code = `${Quiz.summary([a], { a: f.partA.answers.a })}\n\nPHẦN B\n${f.partB}\n\nPHẦN C\n${f.partC.map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
+    const requirements = Object.fromEntries(this.checks(f).map(c => [c.id, c.ok]));
+    return {
+      code, characters: code.length, requirements,
+      answers: { partA: f.partA.answers.a || {}, partB: f.partB, partC: f.partC },
+      partAAttempts: f.partA.attempts, typingStats: { ...f.typing }
+    };
+  },
+
+  render() {
+    const c = this.cfg, f = App.state.final;
+    const main = document.querySelector('#main');
+    main.innerHTML = `<div class="eyebrow stage-4">VẬN DỤNG · khoảng ${c.minutes} phút</div>
+<header class="banner"><img src="${c.img}" alt="${Util.esc(c.imgAlt)}"><div><h1>${Util.esc(c.title)}</h1><p class="lead">Em dùng điều đã học để xử lí một tình huống thật trong nhóm chat lớp. Đây là bài làm của riêng em, hãy tự viết bằng lời của mình.</p></div></header>
+<section class="panel scenario">${c.scenario}</section>
+<section class="panel part"><h2>${Util.esc(c.partA.text)}</h2><div id="final-a"></div></section>
+<section class="panel part"><h2>${Util.esc(c.partB.text)}</h2>
+  <textarea id="final-b" rows="6" placeholder="${Util.esc(c.partB.placeholder)}" aria-label="Phần B"></textarea>
+  <div class="count" id="count-b"></div></section>
+<section class="panel part"><h2>${Util.esc(c.partC.text)}</h2>
+  ${[0, 1, 2].map(i => `<label class="rule"><span>${i + 1}</span><input class="final-c" data-i="${i}" maxlength="200" placeholder="${Util.esc(c.partC.placeholders[i])}" autocomplete="off"></label><div class="count" id="count-c${i}"></div>`).join('')}
+</section>
+<section class="panel submit-card" id="submit-card"><h2>Danh sách yêu cầu</h2><ul id="final-checks" class="checks"></ul>
+  <button id="submit-final" type="button" aria-disabled="true">Nộp bài vận dụng →</button>
+  <div id="submit-status" role="status"></div></section>`;
+
+    // Phần A: dùng bộ máy câu hỏi
+    Quiz.mount(document.querySelector('#final-a'), [this.partAQuestion()], f.partA, {
+      checkLabel: 'Kiểm tra phần A', onChange: () => { App.save(); this.refresh(); }
+    });
+
+    const b = document.querySelector('#final-b'); b.value = f.partB;
+    const cs = [...document.querySelectorAll('.final-c')]; cs.forEach((el, i) => { el.value = f.partC[i]; });
+    const track = (el, set) => {
+      let before = el.value.length;
+      el.addEventListener('keydown', () => { f.typing.keyCount++; });
+      el.addEventListener('input', () => {
+        const now = new Date().toISOString();
+        f.typing.charsTyped += Math.max(0, el.value.length - before); before = el.value.length;
+        f.typing.firstInputAt = f.typing.firstInputAt || now; f.typing.lastInputAt = now;
+        set(el.value); App.save(); this.refresh();
+      });
+      // Chặn dán: em phải tự viết bằng lời của mình
+      const block = e => { e.preventDefault(); f.typing.pasteBlocked++; App.save(); Util.toast('Em hãy tự viết bằng lời của mình, không dán nhé.'); };
+      el.addEventListener('paste', block); el.addEventListener('drop', block);
+    };
+    track(b, v => { f.partB = v; });
+    cs.forEach((el, i) => track(el, v => { f.partC[i] = v; }));
+
+    document.querySelector('#submit-final').onclick = () => {
+      const missing = this.checks().filter(x => !x.ok);
+      const status = document.querySelector('#submit-status');
+      if (missing.length) { status.textContent = 'Còn thiếu: ' + missing.map(x => x.label.split(':')[0]).join(', ') + '. Xem danh sách bên trên.'; return; }
+      App.submit('final');
+    };
+    this.refresh();
+  },
+
+  // Cập nhật danh sách yêu cầu và bộ đếm từ (không vẽ lại ô nhập)
+  refresh() {
+    const list = document.querySelector('#final-checks'); if (!list) return;
+    const f = App.state.final, c = this.cfg, checks = this.checks();
+    list.innerHTML = checks.map(x => `<li class="${x.ok ? 'ok' : ''}">${Util.esc(x.label)}</li>`).join('');
+    const cb = document.querySelector('#count-b'); if (cb) cb.textContent = `${Util.words(f.partB)} từ`;
+    f.partC.forEach((t, i) => { const el = document.querySelector('#count-c' + i); if (el) el.textContent = `${Util.words(t)} từ`; });
+    const btn = document.querySelector('#submit-final');
+    btn.setAttribute('aria-disabled', String(!this.passed()));
+    const done = App.state.finalSubmittedAt;
+    if (done && !App.submitting) document.querySelector('#submit-status').textContent = 'Đã nộp lúc ' + new Date(done).toLocaleTimeString('vi-VN') + '. Nếu em sửa bài, bấm nộp lại để gửi bản mới.';
+  }
+};
