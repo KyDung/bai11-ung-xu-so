@@ -117,7 +117,10 @@ Content.learning = [
 <div class="step-title"><i>1</i><h3>Ai ban hành quy định? (chỉ cần nhớ 3 tầng)</h3></div>
 <div class="layers">
   <div class="ly l1"><b>Luật</b><em>Quốc hội ban hành, quy định chung</em>
-    <ul><li><b>Luật Công nghệ thông tin</b> (2006)</li><li><b>Luật An ninh mạng</b> (2018): cấm đăng thông tin sai sự thật gây hoang mang trong nhân dân</li><li>Luật Giao dịch điện tử (2005), Bộ luật Hình sự (2017)</li></ul></div>
+    <ul><li><b>Luật Công nghệ thông tin</b> (2006): quy định việc ứng dụng và phát triển CNTT. <i>Điều 12 khoản 2</i> liệt kê những thông tin cấm đăng lên mạng (xuyên tạc, vu khống, kích động bạo lực, tiết lộ bí mật nhà nước, quảng cáo hàng cấm…)</li>
+    <li><b>Luật An ninh mạng</b> (2018): bảo vệ an ninh quốc gia trên không gian mạng. <i>Điều 8 khoản 1</i> cấm dùng mạng để đăng thông tin sai sự thật gây hoang mang trong nhân dân, xuyên tạc lịch sử, phân biệt đối xử…</li>
+    <li><b>Luật Giao dịch điện tử</b> (2005): quy định giao dịch bằng phương tiện điện tử, ví dụ hợp đồng và chữ kí điện tử</li>
+    <li><b>Bộ luật Hình sự</b> (2017): xử lí hình sự người phạm tội, kể cả trên mạng (gây thương tích nặng, làm nhục người khác…)</li></ul></div>
   <div class="ly l2"><b>Nghị định</b><em>Chính phủ ban hành, nói cụ thể luật và mức phạt</em>
     <ul><li><b>Nghị định 90/2008/NĐ-CP</b>: chống thư rác</li><li><b>Nghị định 72/2013/NĐ-CP</b>: quản lí, cung cấp, sử dụng dịch vụ Internet</li><li><b>Nghị định 15/2020/NĐ-CP</b>: xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, CNTT, giao dịch điện tử</li></ul></div>
   <div class="ly l3"><b>Bộ quy tắc ứng xử</b><em>Bộ Thông tin và Truyền thông, mang tính khuyến cáo</em>
