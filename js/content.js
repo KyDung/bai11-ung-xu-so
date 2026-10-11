@@ -141,16 +141,25 @@ Content.learning = [
     questions: [
       {
         id: 'q1', type: 'assign', ui: 'select',
-        text: 'Ghép mỗi nội dung với văn bản pháp lí tương ứng.',
-        groups: ['Nghị định 90/2008/NĐ-CP', 'Nghị định 15/2020/NĐ-CP', 'Luật An ninh mạng 2018', 'Quyết định 874/QĐ-BTTTT (2021)'],
+        text: 'Mỗi tin dưới đây thuộc nhóm tin nào trong 5 nhóm không được đăng hoặc chia sẻ?',
+        groups: ['Tin sai sự thật, bịa đặt, gây hoang mang', 'Xúc phạm, vu khống người khác', 'Bạo lực, đồi truỵ, mê tín, tệ nạn', 'Nội dung không được phép lưu hành', 'Bí mật nhà nước, chống phá Nhà nước'],
         items: [
-          { t: 'Quy định về chống thư rác', g: 0 },
-          { t: 'Quy định xử phạt vi phạm hành chính trong lĩnh vực bưu chính, viễn thông, CNTT và giao dịch điện tử', g: 1 },
-          { t: 'Cấm dùng không gian mạng để đăng thông tin sai sự thật gây hoang mang trong nhân dân', g: 2 },
-          { t: 'Bộ quy tắc ứng xử trên mạng xã hội của Bộ Thông tin và Truyền thông', g: 3 }
+          { t: 'Đăng tin “ngày mai cả thành phố mất điện 3 ngày” mà không có nguồn, khiến nhiều người lo lắng', g: 0 },
+          { t: 'Viết bài nói một bạn trong lớp ăn cắp dù không có bằng chứng', g: 1 },
+          { t: 'Chia sẻ clip miêu tả tỉ mỉ cảnh chém giết', g: 2 },
+          { t: 'Tải bài hát của ca sĩ về đăng lên kênh của mình khi chưa được phép', g: 3 },
+          { t: 'Đăng ảnh chụp tài liệu mật về an ninh quốc gia', g: 4 }
         ],
-        hint: 'Những mục có viền đỏ chưa đúng. Em xem lại bước 1 “Ai ban hành quy định?”.',
-        explain: 'Chính xác! Luật quy định chung, nghị định cụ thể hoá luật, còn bộ quy tắc ứng xử là khuyến cáo cho người dùng mạng xã hội.'
+        hint: 'Những mục có viền đỏ chưa đúng. Em đọc lại 5 thẻ ở bước 2 và nghĩ xem tin đó gây hại theo cách nào.',
+        explain: 'Chính xác! Biết tin thuộc nhóm nào giúp em nhận ra tin nên tránh, và biết lúc cần thì tra điều luật nào.'
+      },
+      {
+        id: 'q1b', type: 'single',
+        text: 'Vì sao ngoài Luật, Chính phủ còn ban hành các Nghị định (như Nghị định 15/2020)?',
+        options: ['Để thay thế Luật khi Luật hết hiệu lực', 'Để nói cụ thể từng hành vi vi phạm và mức xử phạt, giúp thực hiện Luật', 'Để khuyên người dùng nên dùng tên thật trên mạng xã hội'],
+        answer: 1,
+        hint: 'Chưa đúng. Em xem lại bước 1: Nghị định đứng ở tầng nào, làm nhiệm vụ gì so với Luật?',
+        explain: 'Chính xác! Luật quy định chung, Nghị định cụ thể hoá luật và nêu mức phạt. Còn khuyến cáo dùng tên thật là của Bộ quy tắc ứng xử.'
       },
       {
         id: 'q2', type: 'assign', ui: 'chips',
@@ -204,18 +213,17 @@ Content.learning = [
     questions: [
       {
         id: 'q1', type: 'assign', ui: 'chips',
-        text: 'Mỗi quyền dưới đây thuộc nhóm quyền nào?',
+        text: 'Em là tác giả một bài thơ. Mỗi việc làm dưới đây của người khác xâm phạm nhóm quyền nào của em?',
         groups: ['Quyền nhân thân', 'Quyền tài sản'],
         items: [
-          { t: 'Được nêu tên thật hoặc bút danh khi tác phẩm được công bố', g: 0 },
-          { t: 'Sao chép tác phẩm', g: 1 },
-          { t: 'Không cho người khác sửa chữa, cắt xén hay xuyên tạc tác phẩm', g: 0 },
-          { t: 'Làm tác phẩm phái sinh', g: 1 },
-          { t: 'Cho thuê bản sao của chương trình máy tính', g: 1 },
-          { t: 'Đặt tên cho tác phẩm', g: 0 }
+          { t: 'Bài thơ được đăng lên mạng nhưng không ghi tên em', g: 0 },
+          { t: 'Có người in sao bài thơ thành nhiều bản để bán', g: 1 },
+          { t: 'Có người sửa, cắt xén bài thơ làm sai ý nghĩa rồi đăng lên', g: 0 },
+          { t: 'Có người dịch bài thơ sang tiếng Anh để xuất bản mà không xin phép em', g: 1 },
+          { t: 'Có người tự ý đặt lại tên khác cho bài thơ của em', g: 0 }
         ],
-        hint: 'Những mục có viền đỏ chưa đúng. Gợi ý: quyền nhân thân gắn với con người và danh dự của tác giả, quyền tài sản gắn với lợi ích kinh tế.',
-        explain: 'Chính xác! Vi phạm quyền nhân thân hay quyền tài sản đều là vi phạm bản quyền.'
+        hint: 'Những mục có viền đỏ chưa đúng. Gợi ý: nhân thân gắn với tên, danh dự, sự nguyên vẹn của tác phẩm; tài sản gắn với việc sao chép, làm bản phái sinh, khai thác kiếm tiền.',
+        explain: 'Chính xác! Xâm phạm quyền nhân thân hay quyền tài sản đều là vi phạm bản quyền.'
       },
       {
         id: 'q2', type: 'single',
