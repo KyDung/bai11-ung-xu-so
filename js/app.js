@@ -195,12 +195,12 @@ const App = {
     document.querySelector('#main').innerHTML = `<div class="eyebrow ${learning ? 'stage-2' : 'stage-3'}">${label} · phần ${i + 1}/${acts.length} · khoảng ${a.minutes} phút</div>
 <header class="banner${a.img ? '' : ' plain'}">${a.img ? `<img src="${a.img}" alt="${Util.esc(a.imgAlt)}">` : `<div class="big-icon" aria-hidden="true">${a.icon}</div>`}<div><h1>${Util.esc(a.title)}</h1><p class="lead">${Util.esc(a.lead)}</p></div></header>
 ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
-<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2>${learning ? '<p class="small muted">Mỗi phần chỉ làm <b>một lần</b>: bấm nộp là khóa, không sửa được và được tính điểm. Em đọc kĩ rồi mới nộp. Câu sai sẽ hiện đáp án đúng để em hiểu lại.</p>' : ''}<div id="quiz"></div></section><div id="after"></div>`;
+<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2>${learning ? '<p class="small muted">Mỗi phần chỉ làm <b>một lần</b>: bấm Kiểm tra là khóa, không sửa được và được tính điểm. Em đọc kĩ rồi mới bấm. Câu sai sẽ hiện đáp án đúng để em hiểu lại.</p>' : ''}<div id="quiz"></div></section><div id="after"></div>`;
     const st = this.state.drafts[a.id] || (this.state.drafts[a.id] = Quiz.newState());
     // Hoạt động đã đạt: khóa toàn bộ đáp án để xem lại
     if (this.passed(kind, a)) { const r = this.rec(kind, a); st.answers = r.answers; a.questions.forEach(q => { st.locked[q.id] = true; }); }
     Quiz.mount(document.querySelector('#quiz'), a.questions, st, {
-      once: !!ONCE[kind], reveal: learning, checkLabel: 'Nộp phần này (không sửa được)',
+      once: !!ONCE[kind], reveal: learning, checkLabel: 'Kiểm tra (không sửa được)',
       onChange: () => this.saveSoon(),
       onAllDone: () => this.complete(kind, a, i, st)
     });

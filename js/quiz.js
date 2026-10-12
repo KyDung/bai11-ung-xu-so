@@ -133,7 +133,7 @@ const Quiz = {
     btn.onclick = () => {
       const open = questions.filter(q => !st.locked[q.id]);
       if (open.some(q => !this.answered(q, st.answers[q.id]))) { Util.toast('Em trả lời hết các câu trước khi kiểm tra nhé.'); return; }
-      if (opts.once && !confirm('Sau khi kiểm tra, em KHÔNG sửa được đáp án nữa. Em chắc chắn muốn nộp phần này?')) return;
+      if (opts.once && !confirm('Sau khi kiểm tra, em KHÔNG sửa được đáp án nữa. Em chắc chắn muốn kiểm tra?')) return;
       st.attempts++;
       open.forEach(q => {
         if (opts.once) { st.first[q.id] = this.correct(q, st.answers[q.id]); st.firstScore[q.id] = this.scoreOf(q, st.answers[q.id]); st.locked[q.id] = true; redraw(q); return; }
