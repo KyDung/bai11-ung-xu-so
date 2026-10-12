@@ -462,10 +462,5 @@ Content.final = {
     id: 'partB', minWords: 25,
     text: 'Phần B. Em là bạn thân của Hải. Hãy viết lời khuyên cho Hải về việc làm poster (tình huống số 3): Hải đã vi phạm điều gì, và Hải nên làm gì để đúng pháp luật?',
     placeholder: 'Viết bằng lời của em, ít nhất 25 từ…'
-  },
-  partC: {
-    id: 'partC', count: 3, minWords: 6,
-    text: 'Phần C. Cùng viết “3 quy tắc ứng xử trên mạng của lớp 10A”. Mỗi quy tắc là một câu rõ ràng, ít nhất 6 từ.',
-    placeholders: ['Quy tắc 1: …', 'Quy tắc 2: …', 'Quy tắc 3: …']
   }
 };

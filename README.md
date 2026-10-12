@@ -21,7 +21,7 @@ Dùng Live Server với `index.html`, hoặc `python -m http.server 8080` rồi 
    - Quyền tác giả (quyền nhân thân, quyền tài sản)
    - Vi phạm và tôn trọng bản quyền trong tin học
 3. **Luyện tập** (3 phần, ~11 phút): không có thẻ kiến thức; dùng các câu Luyện tập và Vận dụng của SGK. Cuối phần có nút **Nộp phần 1**.
-4. **Vận dụng** (~10 phút): hồ sơ tình huống nhóm chat lớp 10A. Phần A xếp hành vi (chấm tự động), phần B lời khuyên cho bạn Hải (≥ 25 từ), phần C ba quy tắc ứng xử của lớp. Có danh sách yêu cầu trực tiếp, chặn dán, nộp riêng. Phần B, C chỉ kiểm tra độ dài, giáo viên đọc trên `teacher.html`.
+4. **Vận dụng** (~10 phút): hồ sơ tình huống nhóm chat lớp 10A. Phần A xếp hành vi (chấm tự động), phần B lời khuyên cho bạn Hải (≥ 25 từ). Có danh sách yêu cầu trực tiếp, chặn dán, nộp riêng. Phần B chỉ kiểm tra độ dài, giáo viên đọc trên `teacher.html`.
 
 Mỗi phần chỉ kiểm tra một lần, bấm Kiểm tra là khóa (xem mục Cách tính điểm). Điểm từng phần được gửi cho giáo viên.
 
@@ -31,7 +31,7 @@ Mỗi phần chỉ kiểm tra một lần, bấm Kiểm tra là khóa (xem mục
 - Hình thành kiến thức (14 câu): mỗi phần làm **một lần**, bấm Kiểm tra là khóa; câu sai hiện đáp án đúng và giải thích để sửa hiểu nhầm.
 - Luyện tập (9 câu): làm một lần, bấm Kiểm tra là khóa; câu sai chỉ hiện gợi ý, không lộ đáp án.
 - Điểm phần 1 = (điểm Hình thành + điểm Luyện tập) ÷ 23 × 10, mỗi câu 1 điểm, câu xếp nhóm tính theo tỉ lệ mục đúng. Phải **trên 7** mới được nộp phần 1 và sang Vận dụng; không đạt thì làm lại Hình thành + Luyện tập (hằng `PASS_SCORE` trong `js/app.js`).
-- Vận dụng: không tính điểm; phần A tự chấm, phần B, C giáo viên đọc.
+- Vận dụng: không tính điểm; phần A tự chấm, phần B giáo viên đọc.
 
 ## Sửa nội dung
 
