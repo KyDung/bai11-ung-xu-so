@@ -329,16 +329,16 @@ Content.practice = [
     lead: 'Lần này không có thẻ kiến thức. Em tự vận dụng những gì đã học.',
     questions: [
       {
-        id: 'q1', type: 'assign', ui: 'chips',
-        text: 'Em đồng ý, không đồng ý hay chỉ đồng ý một phần với từng ý kiến sau?',
-        groups: ['Đồng ý', 'Không đồng ý', 'Đồng ý một phần'],
+        id: 'q1', type: 'assign', ui: 'select',
+        text: 'Ba bạn cùng nói “chúng ta có quyền đưa lên mạng xã hội tất cả các tin…” nhưng mỗi bạn đặt một điều kiện. Cách nghĩ của mỗi bạn còn thiếu điều gì?',
+        groups: ['Tin thật vẫn có thể vi phạm pháp luật (ví dụ tiết lộ bí mật, công bố thông tin cá nhân)', 'Tin có thể gây hại cho tổ chức, cộng đồng, Nhà nước chứ không chỉ cho cá nhân', 'Tin không vi phạm pháp luật vẫn phải cân nhắc hậu quả về đạo đức'],
         items: [
-          { t: 'Chúng ta có quyền đưa lên mạng xã hội tất cả các tin không phải là tin giả.', g: 1 },
-          { t: 'Chúng ta có quyền đưa lên mạng xã hội tất cả các tin miễn là không có hại đến cá nhân nào.', g: 1 },
-          { t: 'Chúng ta có quyền đưa lên mạng xã hội tất cả các tin miễn là không vi phạm pháp luật.', g: 2 }
+          { t: 'Bạn An: “…tất cả các tin miễn là không phải tin giả.”', g: 0 },
+          { t: 'Bạn Bình: “…tất cả các tin miễn là không có hại đến cá nhân nào.”', g: 1 },
+          { t: 'Bạn Chi: “…tất cả các tin miễn là không vi phạm pháp luật.”', g: 2 }
         ],
-        hint: 'Những mục có viền đỏ chưa đúng. Gợi ý: tin thật vẫn có thể vi phạm pháp luật (ví dụ tiết lộ bí mật, xúc phạm danh dự); tin không phạm luật vẫn cần cân nhắc về đạo đức.',
-        explain: 'Chính xác! Tin thật chưa chắc được phép đăng, và tin không vi phạm pháp luật vẫn có thể vi phạm đạo đức, nên ý (c) chỉ đúng một phần.'
+        hint: 'Những mục có viền đỏ chưa đúng. Gợi ý: An chỉ nghĩ đến thật hay giả; Bình chỉ nghĩ đến cá nhân; Chi chỉ nghĩ đến luật. Em đối chiếu với nguyên tắc “Ba nguyên tắc để chia sẻ an toàn”.',
+        explain: 'Chính xác! Một tin chỉ nên đăng khi đúng sự thật, không vi phạm pháp luật và đã cân nhắc hậu quả đạo đức. Cả ba bạn đều mới nghĩ đến một khía cạnh.'
       },
       {
         id: 'q2', type: 'single',
