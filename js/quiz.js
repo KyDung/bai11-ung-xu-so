@@ -17,6 +17,12 @@ const Quiz = {
     if (q.type === 'assign') return (q.items.length - this.wrongItems(q, v).length) / q.items.length;
     return this.correct(q, v) ? 1 : 0;
   },
+  // Đáp án đúng dạng chữ (chỉ dùng sau khi học sinh đã nộp, để sửa hiểu nhầm)
+  answerText(q, v) {
+    if (q.type === 'single') return q.options[q.answer];
+    if (q.type === 'multi') return q.answer.map(i => q.options[i]).join('; ');
+    return this.wrongItems(q, v).map(i => `“${q.items[i].t}” → ${q.groups[q.items[i].g]}`).join(' | ');
+  },
   wrongItems(q, v) { return q.items.map((it, i) => (v?.[i] === it.g ? -1 : i)).filter(i => i >= 0); },
   correct(q, v) {
     if (!this.answered(q, v)) return false;
@@ -68,7 +74,9 @@ const Quiz = {
     if (frac !== null) {
       const part = q.type === 'assign' && frac < 1 ? `Đúng ${q.items.length - this.wrongItems(q, v).length}/${q.items.length} mục. ` : '';
       msg = frac === 1 ? `<div class="q-msg good" role="status">✓ ${Util.esc(q.explain)}</div>`
-        : `<div class="q-msg bad" role="status">✗ Chưa đúng. ${part}${Util.esc(o.reveal ? q.explain : q.hint)}</div>`;
+        : o.reveal
+          ? `<div class="q-msg bad" role="status">✗ Chưa đúng. ${part}<b>Đáp án đúng:</b> ${Util.esc(this.answerText(q, v))}.<br>${Util.esc(String(q.explain || '').replace(/^Chính xác!\s*/, ''))}</div>`
+          : `<div class="q-msg bad" role="status">✗ Chưa đúng. ${part}${Util.esc(q.hint)}</div>`;
     } else if (locked) msg = `<div class="q-msg good" role="status">✓ ${Util.esc(q.soft ? q.reveal : q.explain)}</div>`;
     else if (bad) msg = `<div class="q-msg bad" role="status">💡 ${Util.esc(q.hint)}</div>`;
     return `<article class="q${frac !== null ? (frac === 1 ? ' ok' : ' no') : locked ? ' ok' : ''}${!locked && bad ? ' no' : ''}" data-qid="${q.id}"><div class="q-head"><span class="q-num">${n + 1}</span><p class="q-text">${Util.esc(q.text)}</p></div>${body}${msg}</article>`;

@@ -4,7 +4,7 @@ const STAGES = ['home', 'warmup', 'learning', 'practice', 'final'];
 const STAGE_LABEL = { warmup: 'Khởi động', learning: 'Hình thành kiến thức', practice: 'Luyện tập', final: 'Vận dụng' };
 
 const PASS_SCORE = 7;                 // Luyện tập phải TRÊN 7 điểm (thang 10) mới được nộp phần 1 và sang Vận dụng
-const ONCE = { warmup: true, practice: true };   // hoạt động chỉ làm một lần, kiểm tra xong không sửa được
+const ONCE = { warmup: true, learning: true, practice: true };   // hoạt động chỉ làm một lần, kiểm tra xong không sửa được
 
 const App = {
   state: null, submitting: false, teacher: false, wantedHash: '',
@@ -28,14 +28,14 @@ const App = {
     return 'final';
   },
   // Điểm phần 1 (thang 10) = Hình thành + Luyện tập, mỗi câu 1 điểm, câu xếp nhóm tính theo tỉ lệ mục đúng.
-  // Hình thành tính theo LẦN TRẢ LỜI ĐẦU TIÊN (sau đó vẫn được sửa để sang phần sau); Luyện tập chỉ làm một lần.
+  // Cả Hình thành và Luyện tập chỉ làm một lần: kiểm tra xong là khóa, không sửa được.
   rawScore(kind) {
     let got = 0, all = 0;
     for (const act of this.acts(kind)) {
       const r = this.rec(kind, act);
       for (const q of act.questions) {
         all++;
-        got += !r ? 0 : kind === 'practice' ? Quiz.scoreOf(q, r.answers?.[q.id]) : Number(r.scores?.[q.id]) || 0;
+        got += r ? Quiz.scoreOf(q, r.answers?.[q.id]) : 0;
       }
     }
     return { got, all };
@@ -195,28 +195,27 @@ const App = {
     document.querySelector('#main').innerHTML = `<div class="eyebrow ${learning ? 'stage-2' : 'stage-3'}">${label} · phần ${i + 1}/${acts.length} · khoảng ${a.minutes} phút</div>
 <header class="banner${a.img ? '' : ' plain'}">${a.img ? `<img src="${a.img}" alt="${Util.esc(a.imgAlt)}">` : `<div class="big-icon" aria-hidden="true">${a.icon}</div>`}<div><h1>${Util.esc(a.title)}</h1><p class="lead">${Util.esc(a.lead)}</p></div></header>
 ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
-<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2>${learning ? '<p class="small muted">Điểm tính theo <b>lần trả lời đầu tiên</b> của mỗi câu. Sau đó em vẫn sửa được để sang phần sau.</p>' : ''}<div id="quiz"></div></section><div id="after"></div>`;
+<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2>${learning ? '<p class="small muted">Mỗi phần chỉ làm <b>một lần</b>: bấm nộp là khóa, không sửa được và được tính điểm. Em đọc kĩ rồi mới nộp. Câu sai sẽ hiện đáp án đúng để em hiểu lại.</p>' : ''}<div id="quiz"></div></section><div id="after"></div>`;
     const st = this.state.drafts[a.id] || (this.state.drafts[a.id] = Quiz.newState());
     // Hoạt động đã đạt: khóa toàn bộ đáp án để xem lại
     if (this.passed(kind, a)) { const r = this.rec(kind, a); st.answers = r.answers; a.questions.forEach(q => { st.locked[q.id] = true; }); }
     Quiz.mount(document.querySelector('#quiz'), a.questions, st, {
-      once: !!ONCE[kind], checkLabel: ONCE[kind] ? 'Nộp phần này (không sửa được)' : undefined,
+      once: !!ONCE[kind], reveal: learning, checkLabel: 'Nộp phần này (không sửa được)',
       onChange: () => this.saveSoon(),
       onAllDone: () => this.complete(kind, a, i, st)
     });
   },
   complete(kind, a, i, st) {
     const old = this.rec(kind, a), now = new Date().toISOString();
-    // Điểm từng câu: Hình thành = lần trả lời đầu tiên; Luyện tập = bài nộp một lần
-    const scores = kind === 'practice' ? Object.fromEntries(a.questions.map(q => [q.id, Quiz.scoreOf(q, st.answers[q.id])]))
-      : Object.keys(st.firstScore || {}).length ? { ...st.firstScore } : { ...(old?.scores || {}) };
+    // Điểm từng câu (tính từ đáp án đã nộp)
+    const scores = Object.fromEntries(a.questions.map(q => [q.id, Quiz.scoreOf(q, st.answers[q.id])]));
     const r = { activityId: a.id, attempts: st.attempts || old?.attempts || 0, passed: true, startedAt: old?.startedAt || st.startedAt, completedAt: old?.completedAt || now, firstTry: Object.keys(st.first).length ? Quiz.firstTryCount(a.questions, st) : (old?.firstTry ?? 0), total: a.questions.length, scores, score: Object.values(scores).reduce((n, x) => n + x, 0), answers: st.answers, studentCode: Quiz.summary(a.questions, st.answers) };
     if (old) Object.assign(old, r); else this.state[kind].push(r);
     this.save(); this.nav();
     const last = i === this.acts(kind).length - 1;
     const full = r.score === r.total, pts = `${Math.round(r.score * 10) / 10}/${r.total}`;
     const once = true;
-    const title = ONCE[kind] ? `Phần này em được ${pts} điểm.` : `${a.success} Điểm tính theo lần trả lời đầu: ${pts}.`;
+    const title = `Phần này em được ${pts} điểm.${full ? ' ' + a.success : ''}`;
     document.querySelector('#after').innerHTML = `<div class="done-banner${once && !full ? ' warn' : ''}"><div><b>${Util.esc(title)}</b><p>${last ? 'Em đã xong hoạt động này.' : 'Em sang phần tiếp theo khi sẵn sàng.'}</p></div><button id="go-next">${last ? 'Hoàn thành →' : 'Phần tiếp theo →'}</button></div>`;
     document.querySelector('#go-next').onclick = () => { location.hash = last ? kind : `${kind}/${i + 1}`; };
     if (!old || !old.passed) document.querySelector('#after').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -227,9 +226,9 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     this.nav(kind);
     const acts = this.acts(kind), recs = this.state[kind];
     const first = recs.reduce((n, r) => n + (r.firstTry || 0), 0), total = recs.reduce((n, r) => n + (r.total || 0), 0);
-    const stat = `<p class="stat">Em trả lời đúng ngay lần đầu <b>${first}/${total}</b> câu. Những câu chưa đúng ngay là cơ hội để em nhớ lâu hơn.</p>`;
+    const stat = `<p class="stat">Em trả lời đúng <b>${first}/${total}</b> câu ở phần này. Câu chưa đúng đã hiện đáp án để em hiểu lại.</p>`;
     const l = this.learningScore(), pr = this.rawScore('practice'), r1 = x => Math.round(x * 10) / 10;
-    const breakdown = `<p class="stat">Hình thành kiến thức (tính theo lần trả lời đầu): <b>${r1(l.got)}/${l.all}</b> câu · Luyện tập: <b>${r1(pr.got)}/${pr.all}</b> câu. Mỗi câu 1 điểm, điểm phần 1 = tổng ÷ ${l.all + pr.all} × 10.</p>`;
+    const breakdown = `<p class="stat">Hình thành kiến thức: <b>${r1(l.got)}/${l.all}</b> câu · Luyện tập: <b>${r1(pr.got)}/${pr.all}</b> câu. Mỗi câu 1 điểm, điểm phần 1 = tổng ÷ ${l.all + pr.all} × 10.</p>`;
     const main = document.querySelector('#main');
     main.innerHTML = kind === 'learning'
       ? `<div class="eyebrow stage-2">HOÀN THÀNH HÌNH THÀNH KIẾN THỨC</div><h1>Em đã nắm các kiến thức chính của bài.</h1>
