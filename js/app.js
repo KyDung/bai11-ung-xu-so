@@ -3,11 +3,14 @@
 const STAGES = ['home', 'warmup', 'learning', 'practice', 'final'];
 const STAGE_LABEL = { warmup: 'Khởi động', learning: 'Hình thành kiến thức', practice: 'Luyện tập', final: 'Vận dụng' };
 
+const PASS_SCORE = 7;                 // Luyện tập phải TRÊN 7 điểm (thang 10) mới được nộp phần 1 và sang Vận dụng
+const ONCE = { warmup: true, practice: true };   // hoạt động chỉ làm một lần, kiểm tra xong không sửa được
+
 const App = {
   state: null, submitting: false, teacher: false, wantedHash: '',
 
   fresh() {
-    return { student: null, studentId: null, warmup: null, drafts: {}, learning: [], practice: [], final: Final.fresh(), part1SubmittedAt: null, finalSubmittedAt: null };
+    return { student: null, studentId: null, warmup: null, drafts: {}, learning: [], practice: [], final: Final.fresh(), part1SubmittedAt: null, finalSubmittedAt: null, practiceTries: 1 };
   },
   save() { Store.write(this.state); },
   saveSoon: Util.debounce(() => App.save(), 400),
@@ -21,20 +24,37 @@ const App = {
     if (!this.state.student) return 'home';
     if (!this.state.warmup) return 'warmup';
     if (!this.completed('learning')) return 'learning';
-    if (!this.completed('practice')) return 'practice';
+    if (!this.completed('practice') || !this.practiceOk()) return 'practice';
     return 'final';
+  },
+  // Điểm Luyện tập trên thang 10 (câu xếp nhóm tính theo tỉ lệ mục đúng)
+  practiceScore() {
+    let got = 0, all = 0;
+    for (const act of this.acts('practice')) {
+      const r = this.rec('practice', act);
+      for (const q of act.questions) { all++; got += r ? Quiz.scoreOf(q, r.answers?.[q.id]) : 0; }
+    }
+    return all ? Math.round(got / all * 100) / 10 : 0;
+  },
+  practiceOk() { return this.completed('practice') && this.practiceScore() > PASS_SCORE; },
+  // Làm lại Luyện tập: xóa bài cũ của phần này (Hình thành giữ nguyên)
+  redoPractice() {
+    const s = this.state;
+    this.acts('practice').forEach(a => { delete s.drafts[a.id]; });
+    s.practice = []; s.part1SubmittedAt = null; s.practiceTries = (s.practiceTries || 1) + 1;
+    this.save(); location.hash = 'practice/0'; this.route();
   },
   canAccess(stage) { return this.teacher || STAGES.indexOf(stage) <= STAGES.indexOf(this.frontier()); },
 
   // Khi tải lại trang: chấm lại đáp án đã lưu, hoạt động nào không còn đúng thì khóa các hoạt động sau
   verifyState() {
     const s = this.state;
-    if (s.warmup && !Quiz.verify(Content.warmup.questions, s.warmup.answers)) s.warmup = null;
+    if (s.warmup && !Quiz.verify(Content.warmup.questions, s.warmup.answers, true)) s.warmup = null;
     let prev = !!s.warmup;
     for (const kind of ['learning', 'practice']) {
       for (const act of this.acts(kind)) {
         const r = this.rec(kind, act);
-        const ok = !!r && prev && r.passed && Quiz.verify(act.questions, r.answers);
+        const ok = !!r && prev && r.passed && Quiz.verify(act.questions, r.answers, !!ONCE[kind]);
         if (r) r.passed = ok;
         prev = ok;
       }
@@ -146,14 +166,15 @@ const App = {
 <section class="panel qpanel"><div id="quiz"></div></section><div id="after"></div>`;
     const st = this.state.drafts[w.id] || (this.state.drafts[w.id] = Quiz.newState());
     Quiz.mount(document.querySelector('#quiz'), w.questions, st, {
-      checkLabel: 'Xem gợi ý của thầy cô',
+      once: true, reveal: true, checkLabel: 'Kiểm tra (không sửa được)',
       onChange: () => this.saveSoon(),
       onAllDone: () => {
+        const score = Quiz.total(w.questions, st.answers);
         if (!this.state.warmup) {
-          this.state.warmup = { activityId: w.id, attempts: st.attempts, passed: true, startedAt: st.startedAt, completedAt: new Date().toISOString(), answers: st.answers, studentCode: Quiz.summary(w.questions, st.answers) };
+          this.state.warmup = { activityId: w.id, attempts: st.attempts, passed: true, startedAt: st.startedAt, completedAt: new Date().toISOString(), firstTry: Quiz.firstTryCount(w.questions, st), total: w.questions.length, score, answers: st.answers, studentCode: Quiz.summary(w.questions, st.answers) };
           this.save(); this.nav();
         }
-        document.querySelector('#after').innerHTML = `<div class="done-banner"><div><b>Cảm ơn em đã chia sẻ suy nghĩ!</b><p>${w.wrap}</p></div><button id="go-learning">Vào học kiến thức →</button></div>`;
+        document.querySelector('#after').innerHTML = `<div class="done-banner"><div><b>Khởi động: em được ${Math.round(score * 10) / 10}/${w.questions.length} điểm.</b><p>${w.wrap}</p></div><button id="go-learning">Vào học kiến thức →</button></div>`;
         document.querySelector('#go-learning').onclick = () => { location.hash = 'learning/0'; };
       }
     });
@@ -171,17 +192,20 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     // Hoạt động đã đạt: khóa toàn bộ đáp án để xem lại
     if (this.passed(kind, a)) { const r = this.rec(kind, a); st.answers = r.answers; a.questions.forEach(q => { st.locked[q.id] = true; }); }
     Quiz.mount(document.querySelector('#quiz'), a.questions, st, {
+      once: !!ONCE[kind], checkLabel: ONCE[kind] ? 'Nộp phần này (không sửa được)' : undefined,
       onChange: () => this.saveSoon(),
       onAllDone: () => this.complete(kind, a, i, st)
     });
   },
   complete(kind, a, i, st) {
     const old = this.rec(kind, a), now = new Date().toISOString();
-    const r = { activityId: a.id, attempts: st.attempts || old?.attempts || 0, passed: true, startedAt: old?.startedAt || st.startedAt, completedAt: old?.completedAt || now, firstTry: Object.keys(st.first).length ? Quiz.firstTryCount(a.questions, st) : (old?.firstTry ?? 0), total: a.questions.length, answers: st.answers, studentCode: Quiz.summary(a.questions, st.answers) };
+    const r = { activityId: a.id, attempts: st.attempts || old?.attempts || 0, passed: true, startedAt: old?.startedAt || st.startedAt, completedAt: old?.completedAt || now, firstTry: Object.keys(st.first).length ? Quiz.firstTryCount(a.questions, st) : (old?.firstTry ?? 0), total: a.questions.length, score: Quiz.total(a.questions, st.answers), answers: st.answers, studentCode: Quiz.summary(a.questions, st.answers) };
     if (old) Object.assign(old, r); else this.state[kind].push(r);
     this.save(); this.nav();
     const last = i === this.acts(kind).length - 1;
-    document.querySelector('#after').innerHTML = `<div class="done-banner"><div><b>${Util.esc(a.success)}</b><p>${last ? 'Em đã xong hoạt động này.' : 'Em sang phần tiếp theo khi sẵn sàng.'}</p></div><button id="go-next">${last ? 'Hoàn thành →' : 'Phần tiếp theo →'}</button></div>`;
+    const once = !!ONCE[kind], full = r.score === r.total;
+    const title = once ? `Phần này em được ${Math.round(r.score * 10) / 10}/${r.total} điểm.` : a.success;
+    document.querySelector('#after').innerHTML = `<div class="done-banner${once && !full ? ' warn' : ''}"><div><b>${Util.esc(title)}</b><p>${last ? 'Em đã xong hoạt động này.' : 'Em sang phần tiếp theo khi sẵn sàng.'}</p></div><button id="go-next">${last ? 'Hoàn thành →' : 'Phần tiếp theo →'}</button></div>`;
     document.querySelector('#go-next').onclick = () => { location.hash = last ? kind : `${kind}/${i + 1}`; };
     if (!old || !old.passed) document.querySelector('#after').scrollIntoView({ behavior: 'smooth', block: 'center' });
   },
@@ -197,11 +221,16 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
       ? `<div class="eyebrow stage-2">HOÀN THÀNH HÌNH THÀNH KIẾN THỨC</div><h1>Em đã nắm các kiến thức chính của bài.</h1>
 <p class="lead">Em đã học xong: vấn đề đạo đức, pháp luật, văn hoá trên mạng; quy định pháp lí khi đưa tin; quyền tác giả; vi phạm bản quyền trong tin học.</p>${stat}
 <div class="panel"><h2>Sẵn sàng luyện tập?</h2><p>Phần Luyện tập không có thẻ kiến thức. Em tự nhớ và vận dụng. Em có thể xem lại từng phần bên dưới trước khi vào làm.</p><button id="next-stage">Vào Luyện tập →</button></div>`
-      : `<div class="eyebrow stage-3">LUYỆN TẬP · HOÀN THÀNH</div><h1>Em đã luyện tập xong!</h1>${stat}
+      : !this.practiceOk()
+      ? `<div class="eyebrow stage-3">LUYỆN TẬP · CHƯA ĐẠT</div><h1>Em được ${this.practiceScore()}/10 điểm.</h1>
+<div class="panel fail"><h2>Cần trên ${PASS_SCORE} điểm mới được nộp bài</h2><p>Em chưa đủ điểm để nộp phần 1 và sang Vận dụng. Em hãy xem lại các phần Hình thành kiến thức bên dưới, sau đó bấm làm lại Luyện tập.</p><button id="redo-practice">Làm lại Luyện tập →</button><p class="muted">Lần làm hiện tại: ${this.state.practiceTries || 1}. Bài làm lần này của em vẫn được lưu để giáo viên biết.</p></div>`
+      : `<div class="eyebrow stage-3">LUYỆN TẬP · HOÀN THÀNH</div><h1>Em được ${this.practiceScore()}/10 điểm. Em đã đạt!</h1>
 <div class="panel"><span class="tag">PHẦN 1</span><h2>Nộp phần 1 cho giáo viên</h2><p>Phần 1 gồm Khởi động, Hình thành kiến thức và Luyện tập. Em nộp ngay bây giờ nhé.</p><button id="submit-part1">Nộp phần 1 cho giáo viên →</button><div id="submit-status" role="status"></div></div>
 <button id="next-stage" class="secondary">Tiếp tục sang Vận dụng →</button><p class="muted">Nếu mạng lỗi, bài vẫn được lưu trên máy. Khi nộp bài Vận dụng, phần 1 sẽ được gửi bù.</p>`;
     main.insertAdjacentHTML('beforeend', `<div class="panel"><h3>Xem lại các phần đã làm</h3><div class="review-list">${acts.map((t, i) => `<a class="review-link" href="#${kind}/${i}"><b>${i + 1}</b> ${Util.esc(t.name)}</a>`).join('')}</div></div>`);
-    document.querySelector('#next-stage').onclick = () => { location.hash = kind === 'learning' ? 'practice/0' : 'final'; };
+    if (kind === 'practice' && !this.practiceOk()) main.insertAdjacentHTML('beforeend', `<div class="panel"><h3>Xem lại kiến thức</h3><div class="review-list">${this.acts('learning').map((t, i) => `<a class="review-link" href="#learning/${i}"><b>${i + 1}</b> ${Util.esc(t.name)}</a>`).join('')}</div></div>`);
+    document.querySelector('#redo-practice')?.addEventListener('click', () => { if (confirm('Làm lại sẽ xóa bài Luyện tập hiện tại và em làm lại từ đầu. Tiếp tục?')) this.redoPractice(); });
+    const nextBtn = document.querySelector('#next-stage'); if (nextBtn) nextBtn.onclick = () => { location.hash = kind === 'learning' ? 'practice/0' : 'final'; };
     document.querySelector('#submit-part1')?.addEventListener('click', () => this.submit('part1'));
     if (kind === 'practice' && this.state.part1SubmittedAt) document.querySelector('#submit-status').textContent = 'Em đã nộp phần 1 lúc ' + new Date(this.state.part1SubmittedAt).toLocaleTimeString('vi-VN') + '. Bấm nộp lại nếu muốn gửi bản mới.';
   },
@@ -211,7 +240,7 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     if (this.submitting) return;
     if (!this.state.studentId) { Util.toast('Chế độ giáo viên: chưa nhập học sinh nên không nộp bài.'); return; }
     const status = document.querySelector('#submit-status'), say = t => { if (status) status.textContent = t; };
-    if (!this.completed('learning') || !this.completed('practice')) { say('Em cần hoàn thành Hình thành kiến thức và Luyện tập trước khi nộp.'); return; }
+    if (!this.completed('learning') || !this.practiceOk()) { say('Em cần hoàn thành Hình thành kiến thức và Luyện tập trước khi nộp.'); return; }
     if (type === 'final' && !Final.passed()) { say('Bài Vận dụng còn thiếu yêu cầu. Em xem danh sách bên trên.'); return; }
     this.submitting = true; say('Đang gửi bài, em chờ xác nhận từ máy chủ…');
     try {

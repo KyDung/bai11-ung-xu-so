@@ -36,7 +36,7 @@ const Teacher = {
       return `<div class="student-row"><div><strong>${Util.esc(r.student?.name)}</strong> · ${Util.esc(r.student?.className)}<br>
         <span class="pill ${r.progress?.part1Submitted ? 'ok' : ''}">${r.progress?.part1Submitted ? '✓ Phần 1' : 'Chưa nộp phần 1'}</span>
         <span class="pill ${r.progress?.finalSubmitted ? 'ok' : ''}">${r.progress?.finalSubmitted ? '✓ Vận dụng' : 'Chưa nộp vận dụng'}</span>
-        ${ft.total ? `<span class="muted"> · Đúng ngay lần đầu ${ft.ok}/${ft.total}</span>` : ''}</div>
+        ${r.progress?.practiceScore !== undefined ? `<span class="muted"> · Luyện tập ${r.progress.practiceScore}/10 (lần ${r.progress.practiceTries || 1})</span>` : ''}</div>
         <div class="row-actions"><button data-row="${i}" class="secondary">Xem bài →</button><button data-del="${i}" class="danger" title="Xóa bài này khỏi Firebase">Xóa</button></div></div>`;
     }).join('') : '<p>Chưa có bài nộp phù hợp.</p>';
     document.querySelectorAll('[data-row]').forEach(b => { b.onclick = () => this.detail(rows[Number(b.dataset.row)]); });
@@ -59,7 +59,7 @@ const Teacher = {
     // Mọi nội dung học sinh gõ đều qua Util.esc, không chèn HTML thô
     document.querySelector('#student-detail').innerHTML = `<div class="panel"><h2>${Util.esc(row.student?.name)} · ${Util.esc(row.student?.className)}</h2>
       <p class="muted">Nộp phần 1: ${Util.esc(this.fmt(row.progress?.part1SubmittedAt)) || '—'} · Nộp Vận dụng: ${Util.esc(this.fmt(row.progress?.finalSubmittedAt)) || '—'}</p>
-      ${records.map(r => `<details><summary>${Util.esc(ACTIVITY_NAMES[r.activityId] || r.activityId)} · ${r.passed ? 'Đạt' : 'Chưa đạt'} · ${Number(r.attempts) || 0} lần kiểm tra${r.total ? ` · đúng ngay lần đầu ${Number(r.firstTry) || 0}/${r.total}` : ''}</summary><pre>${Util.esc(r.studentCode)}</pre></details>`).join('')}
+      ${records.map(r => `<details><summary>${Util.esc(ACTIVITY_NAMES[r.activityId] || r.activityId)} · ${r.passed ? 'Đạt' : 'Chưa đạt'} · ${Number(r.attempts) || 0} lần kiểm tra${r.score !== undefined ? ` · điểm ${Math.round(r.score * 10) / 10}/${r.total}` : ''}</summary><pre>${Util.esc(r.studentCode)}</pre></details>`).join('')}
       <h3 style="margin-top:24px">Vận dụng</h3>
       ${f ? `<p class="muted">Phần A: ${Number(f.partAAttempts) || 0} lần kiểm tra · Phím gõ: ${Number(t.keyCount) || 0} · Ký tự gõ: ${Number(t.charsTyped) || 0} · Lần dán bị chặn: ${Number(t.pasteBlocked) || 0}</p>
         <p>${Object.entries(f.requirements || {}).map(([k, v]) => `<span class="pill ${v ? 'ok' : ''}">${Util.esc(k)}: ${v ? 'đạt' : 'chưa'}</span>`).join(' ')}</p>

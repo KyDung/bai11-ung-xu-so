@@ -294,3 +294,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0;background:var(--
 .cats b{font-size:16px}
 .cats p{margin:2px 0 4px;font-size:15px;color:var(--ink-2)}
 .cats small{font-size:12.5px;color:var(--muted);line-height:1.4}
+
+.done-banner.warn{background:var(--s1-soft);border-color:var(--s1)}
+.panel.fail{border:2px solid var(--bad)}

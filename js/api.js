@@ -35,6 +35,8 @@ const Api = {
       learning: [...(s.warmup ? [s.warmup] : []), ...s.learning],
       practice: s.practice,
       progress: {
+        practiceScore: App.practiceScore(),
+        practiceTries: s.practiceTries || 1,
         learningCompleted: App.completed('learning'),
         practiceCompleted: App.completed('practice'),
         part1Submitted: !!s.part1SubmittedAt || isPart1,

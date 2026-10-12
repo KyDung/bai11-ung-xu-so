@@ -3,7 +3,7 @@
    - single: chọn 1 đáp án            { options, answer: số }
    - multi : chọn nhiều đáp án        { options, answer: [số...] }
    - assign: xếp từng mục vào một nhóm { groups, items: [{t, g: số}], ui: 'chips' | 'select' }
-   soft:true  = câu khởi động, không chấm đúng/sai, chỉ cần trả lời rồi hiện `reveal`. */
+   Khởi động và Luyện tập chỉ làm một lần (khóa sau khi kiểm tra); Luyện tập phải trên 7/10 điểm mới được nộp. */
 
 const Content = {};
 
@@ -15,27 +15,27 @@ Content.warmup = {
   img: 'assets/img/sad-phone.jpg',
   imgAlt: 'Một học sinh buồn bã ôm mặt, tay cầm điện thoại',
   title: 'Một đoạn clip lan truyền trên mạng',
-  lead: 'Em đọc tình huống rồi chọn theo suy nghĩ của mình. Ở bước này chưa có đúng hay sai, chỉ cần em trả lời thật.',
+  lead: 'Em đọc tình huống rồi chọn đáp án em cho là đúng. Sau khi bấm kiểm tra, em không sửa được nữa nên hãy cân nhắc kĩ.',
   story: `<p>Do mâu thuẫn ở một diễn đàn trên mạng, một nhóm nữ sinh đánh một bạn nữ khác. Các bạn ở xung quanh <strong>không can ngăn</strong> mà còn <strong>quay phim rồi đưa lên mạng xã hội</strong>.</p>
 <p>Có rất nhiều <strong>bình luận thiếu thiện ý</strong> dưới đoạn clip. Quá xấu hổ với bạn bè, nạn nhân đã <strong>bỏ nhà ra đi</strong>, không để lại lời nhắn.</p>`,
   questions: [
     {
-      id: 'w1', type: 'multi', soft: true,
+      id: 'w1', type: 'multi', answer: [0, 1, 2, 3],
       text: 'Theo em, những hành vi nào trong tình huống trên là chưa đúng? (chọn nhiều đáp án)',
       options: ['Nhóm nữ sinh đánh bạn', 'Các bạn xung quanh đứng xem, không can ngăn', 'Quay phim rồi đưa clip lên mạng xã hội', 'Viết bình luận thiếu thiện ý dưới clip', 'Nạn nhân buồn bã và bỏ nhà ra đi'],
-      reveal: 'Bốn hành vi đầu đều không đúng. Nạn nhân buồn và bỏ đi là hậu quả mà bạn ấy phải chịu, không phải lỗi của bạn ấy. Có hành vi chỉ vi phạm đạo đức, có hành vi đã vi phạm pháp luật. Hôm nay em sẽ biết cách phân biệt.'
+      hint: 'Chưa đúng.', explain: 'Bốn hành vi đầu đều không đúng. Nạn nhân buồn và bỏ đi là hậu quả mà bạn ấy phải chịu, không phải lỗi của bạn ấy. Có hành vi chỉ vi phạm đạo đức, có hành vi đã vi phạm pháp luật. Hôm nay em sẽ biết cách phân biệt.'
     },
     {
-      id: 'w2', type: 'multi', soft: true,
+      id: 'w2', type: 'multi', answer: [0, 1, 2],
       text: 'Vì sao một clip đưa lên mạng thường gây hậu quả nặng nề hơn so với chuyện xảy ra ngoài đời? (chọn nhiều đáp án)',
       options: ['Clip được chia sẻ rất nhanh, đến rất nhiều người', 'Người bình luận có thể giấu tên thật', 'Clip được lưu lại, lúc nào cũng có thể xem lại', 'Vì mạng Internet có tốc độ cao nên clip rõ nét hơn'],
-      reveal: 'Ba lý do đầu là đặc điểm của không gian mạng: lan nhanh và rộng, có thể ẩn danh, lưu trữ lâu dài. Tốc độ đường truyền không phải là nguyên nhân.'
+      hint: 'Chưa đúng.', explain: 'Ba lý do đầu là đặc điểm của không gian mạng: lan nhanh và rộng, có thể ẩn danh, lưu trữ lâu dài. Tốc độ đường truyền không phải là nguyên nhân.'
     },
     {
-      id: 'w3', type: 'single', soft: true,
+      id: 'w3', type: 'single', answer: 2,
       text: 'Nếu em nhận được đoạn clip này, em sẽ làm gì?',
       options: ['Chia sẻ tiếp để mọi người cùng biết', 'Bình luận chê trách các bạn trong clip', 'Không chia sẻ, báo cáo nội dung và nói với thầy cô hoặc người lớn', 'Xem xong rồi bỏ qua'],
-      reveal: 'Lựa chọn nên làm là không chia sẻ, báo cáo nội dung xấu và báo cho thầy cô hoặc người lớn đáng tin cậy. Chia sẻ hay bình luận thiếu thiện ý đều làm nạn nhân tổn thương thêm.'
+      hint: 'Chưa đúng.', explain: 'Lựa chọn nên làm là không chia sẻ, báo cáo nội dung xấu và báo cho thầy cô hoặc người lớn đáng tin cậy. Chia sẻ hay bình luận thiếu thiện ý đều làm nạn nhân tổn thương thêm.'
     }
   ],
   wrap: 'Hôm nay em sẽ: <b>nêu được</b> các vấn đề đạo đức, pháp luật, văn hoá khi giao tiếp qua mạng và <b>giải thích được</b> các quy định pháp lí về đưa tin, tôn trọng bản quyền.'

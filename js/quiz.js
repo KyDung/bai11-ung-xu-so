@@ -11,6 +11,12 @@ const Quiz = {
     if (q.type === 'assign') return !!v && q.items.every((_, i) => Number.isInteger(v[i]));
     return false;
   },
+  // Điểm của một câu: 0..1 (câu xếp nhóm tính theo tỉ lệ mục đúng)
+  scoreOf(q, v) {
+    if (!this.answered(q, v)) return 0;
+    if (q.type === 'assign') return (q.items.length - this.wrongItems(q, v).length) / q.items.length;
+    return this.correct(q, v) ? 1 : 0;
+  },
   wrongItems(q, v) { return q.items.map((it, i) => (v?.[i] === it.g ? -1 : i)).filter(i => i >= 0); },
   correct(q, v) {
     if (!this.answered(q, v)) return false;
@@ -20,7 +26,9 @@ const Quiz = {
     return this.wrongItems(q, v).length === 0;
   },
   // Chấm lại toàn bộ đáp án đã lưu (chống sửa localStorage)
-  verify(questions, answers) { return questions.every(q => this.correct(q, answers?.[q.id])); },
+  // once = hoạt động chỉ làm một lần: chỉ cần đã trả lời đủ, không cần đúng hết
+  verify(questions, answers, once = false) { return questions.every(q => once ? this.answered(q, answers?.[q.id]) : this.correct(q, answers?.[q.id])); },
+  total(questions, answers) { return questions.reduce((n, q) => n + this.scoreOf(q, answers?.[q.id]), 0); },
   allLocked(questions, st) { return questions.every(q => st.locked[q.id]); },
   firstTryCount(questions, st) { return questions.filter(q => st.first[q.id]).length; },
 
@@ -36,8 +44,9 @@ const Quiz = {
   },
 
   /* ---------- Hiển thị ---------- */
-  qHTML(q, n, st, bad) {
+  qHTML(q, n, st, bad, o = {}) {
     const locked = !!st.locked[q.id], v = st.answers[q.id], dis = locked ? 'disabled' : '';
+    const frac = locked && o.once ? this.scoreOf(q, v) : null;
     const letters = 'ABCDEFGH';
     let body = '';
     if (q.type === 'single' || q.type === 'multi') {
@@ -52,13 +61,17 @@ const Quiz = {
         const ctl = select
           ? `<select data-q="${q.id}" data-item="${i}" ${dis} aria-label="Chọn cho: ${Util.esc(it.t)}"><option value="">Chọn…</option>${q.groups.map((g, gi) => `<option value="${gi}"${cur === gi ? ' selected' : ''}>${Util.esc(g)}</option>`).join('')}</select>`
           : `<div class="chips" role="group">${q.groups.map((g, gi) => `<button type="button" class="chip g${gi}${cur === gi ? ' on' : ''}" data-q="${q.id}" data-item="${i}" data-g="${gi}" aria-pressed="${cur === gi}" ${dis}>${Util.esc(g)}</button>`).join('')}</div>`;
-        return `<div class="arow${isBad ? ' wrong' : ''}${locked ? ' right' : ''}"><div class="at">${Util.esc(it.t)}</div>${ctl}</div>`;
+        return `<div class="arow${isBad ? ' wrong' : ''}${locked && !o.once ? ' right' : ''}"><div class="at">${Util.esc(it.t)}</div>${ctl}</div>`;
       }).join('') + '</div>';
     }
     let msg = '';
-    if (locked) msg = `<div class="q-msg good" role="status">✓ ${Util.esc(q.soft ? q.reveal : q.explain)}</div>`;
+    if (frac !== null) {
+      const part = q.type === 'assign' && frac < 1 ? `Đúng ${q.items.length - this.wrongItems(q, v).length}/${q.items.length} mục. ` : '';
+      msg = frac === 1 ? `<div class="q-msg good" role="status">✓ ${Util.esc(q.explain)}</div>`
+        : `<div class="q-msg bad" role="status">✗ Chưa đúng. ${part}${Util.esc(o.reveal ? q.explain : q.hint)}</div>`;
+    } else if (locked) msg = `<div class="q-msg good" role="status">✓ ${Util.esc(q.soft ? q.reveal : q.explain)}</div>`;
     else if (bad) msg = `<div class="q-msg bad" role="status">💡 ${Util.esc(q.hint)}</div>`;
-    return `<article class="q${locked ? ' ok' : ''}${!locked && bad ? ' no' : ''}" data-qid="${q.id}"><div class="q-head"><span class="q-num">${n + 1}</span><p class="q-text">${Util.esc(q.text)}</p></div>${body}${msg}</article>`;
+    return `<article class="q${frac !== null ? (frac === 1 ? ' ok' : ' no') : locked ? ' ok' : ''}${!locked && bad ? ' no' : ''}" data-qid="${q.id}"><div class="q-head"><span class="q-num">${n + 1}</span><p class="q-text">${Util.esc(q.text)}</p></div>${body}${msg}</article>`;
   },
 
   /* mount: vẽ câu hỏi vào root, gắn sự kiện.
@@ -66,13 +79,13 @@ const Quiz = {
   mount(root, questions, st, opts = {}) {
     const bad = {};                                         // câu nào vừa kiểm tra sai (không lưu)
     // Chỉ giữ khóa của câu thật sự đúng
-    questions.forEach(q => { if (st.locked[q.id] && !this.correct(q, st.answers[q.id])) delete st.locked[q.id]; });
-    root.innerHTML = `<div class="qs">${questions.map((q, n) => this.qHTML(q, n, st, bad[q.id])).join('')}</div>
+    if (!opts.once) questions.forEach(q => { if (st.locked[q.id] && !this.correct(q, st.answers[q.id])) delete st.locked[q.id]; });
+    root.innerHTML = `<div class="qs">${questions.map((q, n) => this.qHTML(q, n, st, bad[q.id], opts)).join('')}</div>
       <div class="q-actions"><button type="button" class="check">${opts.checkLabel || 'Kiểm tra đáp án'}</button><span class="q-status" role="status"></span></div>`;
     const btn = root.querySelector('.check'), status = root.querySelector('.q-status');
     const redraw = q => {
       const el = root.querySelector(`[data-qid="${q.id}"]`);
-      el.outerHTML = this.qHTML(q, questions.indexOf(q), st, bad[q.id]);
+      el.outerHTML = this.qHTML(q, questions.indexOf(q), st, bad[q.id], opts);
     };
     const refresh = () => {
       const open = questions.filter(q => !st.locked[q.id]);
@@ -111,8 +124,10 @@ const Quiz = {
     btn.onclick = () => {
       const open = questions.filter(q => !st.locked[q.id]);
       if (open.some(q => !this.answered(q, st.answers[q.id]))) { Util.toast('Em trả lời hết các câu trước khi kiểm tra nhé.'); return; }
+      if (opts.once && !confirm('Sau khi kiểm tra, em KHÔNG sửa được đáp án nữa. Em chắc chắn muốn nộp phần này?')) return;
       st.attempts++;
       open.forEach(q => {
+        if (opts.once) { st.first[q.id] = this.correct(q, st.answers[q.id]); st.locked[q.id] = true; redraw(q); return; }
         const ok = this.correct(q, st.answers[q.id]);
         if (st.first[q.id] === undefined) st.first[q.id] = ok;
         if (ok) { st.locked[q.id] = true; delete bad[q.id]; }
@@ -120,7 +135,7 @@ const Quiz = {
         redraw(q);
       });
       refresh(); opts.onChange?.(st);
-      const firstBad = root.querySelector('.q.no');
+      const firstBad = opts.once ? null : root.querySelector('.q.no');
       if (firstBad) firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (this.allLocked(questions, st)) opts.onAllDone?.();
     };
