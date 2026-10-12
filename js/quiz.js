@@ -2,7 +2,7 @@
    Một "st" (trạng thái) cho mỗi hoạt động: { answers:{qid:giá trị}, locked:{qid:true}, attempts, first:{qid:bool}, startedAt }.
    Giá trị đáp án: single = số, multi = mảng số, assign = { chỉ-số-mục: chỉ-số-nhóm }. */
 const Quiz = {
-  newState() { return { answers: {}, locked: {}, attempts: 0, first: {}, startedAt: new Date().toISOString() }; },
+  newState() { return { answers: {}, locked: {}, attempts: 0, first: {}, firstScore: {}, startedAt: new Date().toISOString() }; },
 
   // Em đã trả lời đủ chưa (chưa xét đúng sai)
   answered(q, v) {
@@ -79,6 +79,7 @@ const Quiz = {
   mount(root, questions, st, opts = {}) {
     const bad = {};                                         // câu nào vừa kiểm tra sai (không lưu)
     // Chỉ giữ khóa của câu thật sự đúng
+    st.firstScore = st.firstScore || {};
     if (!opts.once) questions.forEach(q => { if (st.locked[q.id] && !this.correct(q, st.answers[q.id])) delete st.locked[q.id]; });
     root.innerHTML = `<div class="qs">${questions.map((q, n) => this.qHTML(q, n, st, bad[q.id], opts)).join('')}</div>
       <div class="q-actions"><button type="button" class="check">${opts.checkLabel || 'Kiểm tra đáp án'}</button><span class="q-status" role="status"></span></div>`;
@@ -127,9 +128,9 @@ const Quiz = {
       if (opts.once && !confirm('Sau khi kiểm tra, em KHÔNG sửa được đáp án nữa. Em chắc chắn muốn nộp phần này?')) return;
       st.attempts++;
       open.forEach(q => {
-        if (opts.once) { st.first[q.id] = this.correct(q, st.answers[q.id]); st.locked[q.id] = true; redraw(q); return; }
+        if (opts.once) { st.first[q.id] = this.correct(q, st.answers[q.id]); st.firstScore[q.id] = this.scoreOf(q, st.answers[q.id]); st.locked[q.id] = true; redraw(q); return; }
         const ok = this.correct(q, st.answers[q.id]);
-        if (st.first[q.id] === undefined) st.first[q.id] = ok;
+        if (st.first[q.id] === undefined) { st.first[q.id] = ok; st.firstScore[q.id] = this.scoreOf(q, st.answers[q.id]); }
         if (ok) { st.locked[q.id] = true; delete bad[q.id]; }
         else bad[q.id] = q.type === 'assign' ? this.wrongItems(q, st.answers[q.id]) : true;
         redraw(q);

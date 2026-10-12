@@ -25,6 +25,14 @@ Dùng Live Server với `index.html`, hoặc `python -m http.server 8080` rồi 
 
 Học sinh trả lời sai sẽ được gợi ý (không lộ đáp án), câu đúng được khóa lại. Số lần kiểm tra và số câu đúng ngay lần đầu được gửi cho giáo viên.
 
+## Cách tính điểm phần 1
+
+- Khởi động: 3 câu, chấm đúng sai, khóa sau khi kiểm tra, chỉ ghi nhận (không cộng vào điểm phần 1).
+- Hình thành kiến thức (14 câu): điểm theo **lần trả lời đầu tiên** của mỗi câu; sau đó vẫn sửa được để sang phần sau.
+- Luyện tập (9 câu): làm một lần, nộp là khóa.
+- Điểm phần 1 = (điểm Hình thành + điểm Luyện tập) ÷ 23 × 10, mỗi câu 1 điểm, câu xếp nhóm tính theo tỉ lệ mục đúng. Phải **trên 7** mới được nộp phần 1 và sang Vận dụng; không đạt thì làm lại Hình thành + Luyện tập (hằng `PASS_SCORE` trong `js/app.js`).
+- Vận dụng: không tính điểm; phần A tự chấm, phần B, C giáo viên đọc.
+
 ## Sửa nội dung
 
 Toàn bộ nội dung nằm trong `js/content.js` (thẻ kiến thức, câu hỏi, đáp án, gợi ý, đề Vận dụng). Ba kiểu câu hỏi: `single`, `multi`, `assign` (xếp mục vào nhóm). Bộ máy câu hỏi ở `js/quiz.js`, điều hướng và nộp bài ở `js/app.js`, bài Vận dụng ở `js/final.js`.

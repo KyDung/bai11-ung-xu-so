@@ -36,7 +36,7 @@ const Teacher = {
       return `<div class="student-row"><div><strong>${Util.esc(r.student?.name)}</strong> · ${Util.esc(r.student?.className)}<br>
         <span class="pill ${r.progress?.part1Submitted ? 'ok' : ''}">${r.progress?.part1Submitted ? '✓ Phần 1' : 'Chưa nộp phần 1'}</span>
         <span class="pill ${r.progress?.finalSubmitted ? 'ok' : ''}">${r.progress?.finalSubmitted ? '✓ Vận dụng' : 'Chưa nộp vận dụng'}</span>
-        ${r.progress?.practiceScore !== undefined ? `<span class="muted"> · Luyện tập ${r.progress.practiceScore}/10 (lần ${r.progress.practiceTries || 1})</span>` : ''}</div>
+        ${r.progress?.part1Score !== undefined ? `<span class="muted"> · Điểm phần 1: ${r.progress.part1Score}/10 (lần ${r.progress.practiceTries || 1})</span>` : ''}</div>
         <div class="row-actions"><button data-row="${i}" class="secondary">Xem bài →</button><button data-del="${i}" class="danger" title="Xóa bài này khỏi Firebase">Xóa</button></div></div>`;
     }).join('') : '<p>Chưa có bài nộp phù hợp.</p>';
     document.querySelectorAll('[data-row]').forEach(b => { b.onclick = () => this.detail(rows[Number(b.dataset.row)]); });

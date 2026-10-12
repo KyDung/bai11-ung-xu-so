@@ -24,25 +24,33 @@ const App = {
     if (!this.state.student) return 'home';
     if (!this.state.warmup) return 'warmup';
     if (!this.completed('learning')) return 'learning';
-    if (!this.completed('practice') || !this.practiceOk()) return 'practice';
+    if (!this.completed('practice') || !this.part1Ok()) return 'practice';
     return 'final';
   },
-  // Điểm Luyện tập trên thang 10 (câu xếp nhóm tính theo tỉ lệ mục đúng)
-  practiceScore() {
+  // Điểm phần 1 (thang 10) = Hình thành + Luyện tập, mỗi câu 1 điểm, câu xếp nhóm tính theo tỉ lệ mục đúng.
+  // Hình thành tính theo LẦN TRẢ LỜI ĐẦU TIÊN (sau đó vẫn được sửa để sang phần sau); Luyện tập chỉ làm một lần.
+  rawScore(kind) {
     let got = 0, all = 0;
-    for (const act of this.acts('practice')) {
-      const r = this.rec('practice', act);
-      for (const q of act.questions) { all++; got += r ? Quiz.scoreOf(q, r.answers?.[q.id]) : 0; }
+    for (const act of this.acts(kind)) {
+      const r = this.rec(kind, act);
+      for (const q of act.questions) {
+        all++;
+        got += !r ? 0 : kind === 'practice' ? Quiz.scoreOf(q, r.answers?.[q.id]) : Number(r.scores?.[q.id]) || 0;
+      }
     }
-    return all ? Math.round(got / all * 100) / 10 : 0;
+    return { got, all };
   },
-  practiceOk() { return this.completed('practice') && this.practiceScore() > PASS_SCORE; },
-  // Làm lại Luyện tập: xóa bài cũ của phần này (Hình thành giữ nguyên)
-  redoPractice() {
+  to10(got, all) { return all ? Math.round(got / all * 100) / 10 : 0; },
+  learningScore() { return this.rawScore('learning'); },
+  practiceScore() { const { got, all } = this.rawScore('practice'); return this.to10(got, all); },
+  part1Score() { const l = this.rawScore('learning'), p = this.rawScore('practice'); return this.to10(l.got + p.got, l.all + p.all); },
+  part1Ok() { return this.completed('learning') && this.completed('practice') && this.part1Score() > PASS_SCORE; },
+  // Làm lại phần 1: xóa bài Hình thành và Luyện tập (giữ Khởi động)
+  redoPart1() {
     const s = this.state;
-    this.acts('practice').forEach(a => { delete s.drafts[a.id]; });
-    s.practice = []; s.part1SubmittedAt = null; s.practiceTries = (s.practiceTries || 1) + 1;
-    this.save(); location.hash = 'practice/0'; this.route();
+    [...this.acts('learning'), ...this.acts('practice')].forEach(a => { delete s.drafts[a.id]; });
+    s.learning = []; s.practice = []; s.part1SubmittedAt = null; s.practiceTries = (s.practiceTries || 1) + 1;
+    this.save(); location.hash = 'learning/0'; this.route();
   },
   canAccess(stage) { return this.teacher || STAGES.indexOf(stage) <= STAGES.indexOf(this.frontier()); },
 
@@ -187,7 +195,7 @@ const App = {
     document.querySelector('#main').innerHTML = `<div class="eyebrow ${learning ? 'stage-2' : 'stage-3'}">${label} · phần ${i + 1}/${acts.length} · khoảng ${a.minutes} phút</div>
 <header class="banner${a.img ? '' : ' plain'}">${a.img ? `<img src="${a.img}" alt="${Util.esc(a.imgAlt)}">` : `<div class="big-icon" aria-hidden="true">${a.icon}</div>`}<div><h1>${Util.esc(a.title)}</h1><p class="lead">${Util.esc(a.lead)}</p></div></header>
 ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
-<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2><div id="quiz"></div></section><div id="after"></div>`;
+<section class="panel qpanel"><h2>${learning ? 'Kiểm tra hiểu bài' : 'Em tự làm'}</h2>${learning ? '<p class="small muted">Điểm tính theo <b>lần trả lời đầu tiên</b> của mỗi câu. Sau đó em vẫn sửa được để sang phần sau.</p>' : ''}<div id="quiz"></div></section><div id="after"></div>`;
     const st = this.state.drafts[a.id] || (this.state.drafts[a.id] = Quiz.newState());
     // Hoạt động đã đạt: khóa toàn bộ đáp án để xem lại
     if (this.passed(kind, a)) { const r = this.rec(kind, a); st.answers = r.answers; a.questions.forEach(q => { st.locked[q.id] = true; }); }
@@ -199,12 +207,16 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
   },
   complete(kind, a, i, st) {
     const old = this.rec(kind, a), now = new Date().toISOString();
-    const r = { activityId: a.id, attempts: st.attempts || old?.attempts || 0, passed: true, startedAt: old?.startedAt || st.startedAt, completedAt: old?.completedAt || now, firstTry: Object.keys(st.first).length ? Quiz.firstTryCount(a.questions, st) : (old?.firstTry ?? 0), total: a.questions.length, score: Quiz.total(a.questions, st.answers), answers: st.answers, studentCode: Quiz.summary(a.questions, st.answers) };
+    // Điểm từng câu: Hình thành = lần trả lời đầu tiên; Luyện tập = bài nộp một lần
+    const scores = kind === 'practice' ? Object.fromEntries(a.questions.map(q => [q.id, Quiz.scoreOf(q, st.answers[q.id])]))
+      : Object.keys(st.firstScore || {}).length ? { ...st.firstScore } : { ...(old?.scores || {}) };
+    const r = { activityId: a.id, attempts: st.attempts || old?.attempts || 0, passed: true, startedAt: old?.startedAt || st.startedAt, completedAt: old?.completedAt || now, firstTry: Object.keys(st.first).length ? Quiz.firstTryCount(a.questions, st) : (old?.firstTry ?? 0), total: a.questions.length, scores, score: Object.values(scores).reduce((n, x) => n + x, 0), answers: st.answers, studentCode: Quiz.summary(a.questions, st.answers) };
     if (old) Object.assign(old, r); else this.state[kind].push(r);
     this.save(); this.nav();
     const last = i === this.acts(kind).length - 1;
-    const once = !!ONCE[kind], full = r.score === r.total;
-    const title = once ? `Phần này em được ${Math.round(r.score * 10) / 10}/${r.total} điểm.` : a.success;
+    const full = r.score === r.total, pts = `${Math.round(r.score * 10) / 10}/${r.total}`;
+    const once = true;
+    const title = ONCE[kind] ? `Phần này em được ${pts} điểm.` : `${a.success} Điểm tính theo lần trả lời đầu: ${pts}.`;
     document.querySelector('#after').innerHTML = `<div class="done-banner${once && !full ? ' warn' : ''}"><div><b>${Util.esc(title)}</b><p>${last ? 'Em đã xong hoạt động này.' : 'Em sang phần tiếp theo khi sẵn sàng.'}</p></div><button id="go-next">${last ? 'Hoàn thành →' : 'Phần tiếp theo →'}</button></div>`;
     document.querySelector('#go-next').onclick = () => { location.hash = last ? kind : `${kind}/${i + 1}`; };
     if (!old || !old.passed) document.querySelector('#after').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -216,20 +228,22 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     const acts = this.acts(kind), recs = this.state[kind];
     const first = recs.reduce((n, r) => n + (r.firstTry || 0), 0), total = recs.reduce((n, r) => n + (r.total || 0), 0);
     const stat = `<p class="stat">Em trả lời đúng ngay lần đầu <b>${first}/${total}</b> câu. Những câu chưa đúng ngay là cơ hội để em nhớ lâu hơn.</p>`;
+    const l = this.learningScore(), pr = this.rawScore('practice'), r1 = x => Math.round(x * 10) / 10;
+    const breakdown = `<p class="stat">Hình thành kiến thức (tính theo lần trả lời đầu): <b>${r1(l.got)}/${l.all}</b> câu · Luyện tập: <b>${r1(pr.got)}/${pr.all}</b> câu. Mỗi câu 1 điểm, điểm phần 1 = tổng ÷ ${l.all + pr.all} × 10.</p>`;
     const main = document.querySelector('#main');
     main.innerHTML = kind === 'learning'
       ? `<div class="eyebrow stage-2">HOÀN THÀNH HÌNH THÀNH KIẾN THỨC</div><h1>Em đã nắm các kiến thức chính của bài.</h1>
 <p class="lead">Em đã học xong: vấn đề đạo đức, pháp luật, văn hoá trên mạng; quy định pháp lí khi đưa tin; quyền tác giả; vi phạm bản quyền trong tin học.</p>${stat}
 <div class="panel"><h2>Sẵn sàng luyện tập?</h2><p>Phần Luyện tập không có thẻ kiến thức. Em tự nhớ và vận dụng. Em có thể xem lại từng phần bên dưới trước khi vào làm.</p><button id="next-stage">Vào Luyện tập →</button></div>`
-      : !this.practiceOk()
-      ? `<div class="eyebrow stage-3">LUYỆN TẬP · CHƯA ĐẠT</div><h1>Em được ${this.practiceScore()}/10 điểm.</h1>
-<div class="panel fail"><h2>Cần trên ${PASS_SCORE} điểm mới được nộp bài</h2><p>Em chưa đủ điểm để nộp phần 1 và sang Vận dụng. Em hãy xem lại các phần Hình thành kiến thức bên dưới, sau đó bấm làm lại Luyện tập.</p><button id="redo-practice">Làm lại Luyện tập →</button><p class="muted">Lần làm hiện tại: ${this.state.practiceTries || 1}. Bài làm lần này của em vẫn được lưu để giáo viên biết.</p></div>`
-      : `<div class="eyebrow stage-3">LUYỆN TẬP · HOÀN THÀNH</div><h1>Em được ${this.practiceScore()}/10 điểm. Em đã đạt!</h1>
+      : !this.part1Ok()
+      ? `<div class="eyebrow stage-3">PHẦN 1 · CHƯA ĐẠT</div><h1>Điểm phần 1 của em: ${this.part1Score()}/10.</h1>${breakdown}
+<div class="panel fail"><h2>Cần trên ${PASS_SCORE} điểm mới được nộp bài</h2><p>Em chưa đủ điểm để nộp phần 1 và sang Vận dụng. Em hãy xem lại kiến thức bên dưới, sau đó bấm làm lại Hình thành kiến thức và Luyện tập.</p><button id="redo-practice">Làm lại phần 1 →</button><p class="muted">Lần làm hiện tại: ${this.state.practiceTries || 1}. Bài làm lần này của em vẫn được lưu để giáo viên biết.</p></div>`
+      : `<div class="eyebrow stage-3">PHẦN 1 · ĐẠT</div><h1>Điểm phần 1 của em: ${this.part1Score()}/10. Em đã đạt!</h1>${breakdown}
 <div class="panel"><span class="tag">PHẦN 1</span><h2>Nộp phần 1 cho giáo viên</h2><p>Phần 1 gồm Khởi động, Hình thành kiến thức và Luyện tập. Em nộp ngay bây giờ nhé.</p><button id="submit-part1">Nộp phần 1 cho giáo viên →</button><div id="submit-status" role="status"></div></div>
 <button id="next-stage" class="secondary">Tiếp tục sang Vận dụng →</button><p class="muted">Nếu mạng lỗi, bài vẫn được lưu trên máy. Khi nộp bài Vận dụng, phần 1 sẽ được gửi bù.</p>`;
     main.insertAdjacentHTML('beforeend', `<div class="panel"><h3>Xem lại các phần đã làm</h3><div class="review-list">${acts.map((t, i) => `<a class="review-link" href="#${kind}/${i}"><b>${i + 1}</b> ${Util.esc(t.name)}</a>`).join('')}</div></div>`);
-    if (kind === 'practice' && !this.practiceOk()) main.insertAdjacentHTML('beforeend', `<div class="panel"><h3>Xem lại kiến thức</h3><div class="review-list">${this.acts('learning').map((t, i) => `<a class="review-link" href="#learning/${i}"><b>${i + 1}</b> ${Util.esc(t.name)}</a>`).join('')}</div></div>`);
-    document.querySelector('#redo-practice')?.addEventListener('click', () => { if (confirm('Làm lại sẽ xóa bài Luyện tập hiện tại và em làm lại từ đầu. Tiếp tục?')) this.redoPractice(); });
+    if (kind === 'practice' && !this.part1Ok()) main.insertAdjacentHTML('beforeend', `<div class="panel"><h3>Xem lại kiến thức</h3><div class="review-list">${this.acts('learning').map((t, i) => `<a class="review-link" href="#learning/${i}"><b>${i + 1}</b> ${Util.esc(t.name)}</a>`).join('')}</div></div>`);
+    document.querySelector('#redo-practice')?.addEventListener('click', () => { if (confirm('Làm lại sẽ xóa bài Hình thành kiến thức và Luyện tập hiện tại, em làm lại từ đầu (Khởi động giữ nguyên). Tiếp tục?')) this.redoPart1(); });
     const nextBtn = document.querySelector('#next-stage'); if (nextBtn) nextBtn.onclick = () => { location.hash = kind === 'learning' ? 'practice/0' : 'final'; };
     document.querySelector('#submit-part1')?.addEventListener('click', () => this.submit('part1'));
     if (kind === 'practice' && this.state.part1SubmittedAt) document.querySelector('#submit-status').textContent = 'Em đã nộp phần 1 lúc ' + new Date(this.state.part1SubmittedAt).toLocaleTimeString('vi-VN') + '. Bấm nộp lại nếu muốn gửi bản mới.';
@@ -240,7 +254,7 @@ ${learning ? `<section class="panel knowledge">${a.content}</section>` : ''}
     if (this.submitting) return;
     if (!this.state.studentId) { Util.toast('Chế độ giáo viên: chưa nhập học sinh nên không nộp bài.'); return; }
     const status = document.querySelector('#submit-status'), say = t => { if (status) status.textContent = t; };
-    if (!this.completed('learning') || !this.practiceOk()) { say('Em cần hoàn thành Hình thành kiến thức và Luyện tập trước khi nộp.'); return; }
+    if (!this.completed('learning') || !this.part1Ok()) { say('Em cần hoàn thành Hình thành kiến thức và Luyện tập trước khi nộp.'); return; }
     if (type === 'final' && !Final.passed()) { say('Bài Vận dụng còn thiếu yêu cầu. Em xem danh sách bên trên.'); return; }
     this.submitting = true; say('Đang gửi bài, em chờ xác nhận từ máy chủ…');
     try {
